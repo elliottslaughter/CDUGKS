@@ -1535,6 +1535,7 @@ end
 -- Hongtao Liu et. al. 2018
 -- Step 1: Phibar at interface
 -- Step 1a: Phibar at Cell Center.
+__demand(__cuda, __leaf)
 task Step1a(r_grid : region(ispace(int8d), grid),
             r_gridbarp : region(ispace(int8d), grid),
             r_S : region(ispace(int8d), grid),
@@ -1552,12 +1553,10 @@ where
 do
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_grid.bounds.lo.x, r_grid.bounds.lo.y, r_grid.bounds.lo.z}
-  var shi : int3d = {r_grid.bounds.hi.x, r_grid.bounds.hi.y, r_grid.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_grid.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -1597,11 +1596,12 @@ do
     -- Compute Temperature
     T = Temperature(r_W[e3].rhoE/r_W[e3].rho, u, g, R)
 
-    -- Stop Simulation if Negative Temperature
-    if T < 0 then
-      c.printf("T < 0, r_W[e3].rhoE = %f, r_W[e3].rho = %f, u = %f, g = %f, R = %f\n", r_W[e3].rhoE, r_W[e3].rho, u, g, R)
-      regentlib.assert(T >= 0, "Negative Temperature\n")
-    end
+    
+    -- -- Stop Simulation if Negative Temperature
+    -- if T < 0 then
+    --   c.printf("T < 0, r_W[e3].rhoE = %f, r_W[e3].rho = %f, u = %f, g = %f, R = %f\n", r_W[e3].rhoE, r_W[e3].rho, u, g, R)
+    --   regentlib.assert(T >= 0, "Negative Temperature\n")
+    -- end
 
     -- Compute Relaxation Times
     tg = visc(T, ur, Tr, w)/r_W[e3].rho/R/T
@@ -1654,15 +1654,15 @@ do
       r_gridbarp[e6].b = (tb - dt/4.)/tb*r_grid[e6].b + dt/(4.*tb)*b_eq + dt/4.*r_S[e6].b
   
 
-      -- NaN checker
-      if (isnan(r_gridbarp[e6].g) == 1 or isnan(r_gridbarp[e6].b) == 1) then
+      -- -- NaN checker
+      -- if (isnan(r_gridbarp[e6].g) == 1 or isnan(r_gridbarp[e6].b) == 1) then
 
-        c.printf("Step 1a: gp = %.12f, bp = %.12f, g = %.12f, b = %.12f, g_eq = %.12f, Sg = %.12f, Sb = %.12f, taus = {%.12f, %.12f}\n", r_gridbarp[e6].g, r_gridbarp[e6].b, r_grid[e6].g, r_grid[e6].b, g_eq, r_S[e6].g, r_S[e6].b, tg, tb)
+      --   c.printf("Step 1a: gp = %.12f, bp = %.12f, g = %.12f, b = %.12f, g_eq = %.12f, Sg = %.12f, Sb = %.12f, taus = {%.12f, %.12f}\n", r_gridbarp[e6].g, r_gridbarp[e6].b, r_grid[e6].g, r_grid[e6].b, g_eq, r_S[e6].g, r_S[e6].b, tg, tb)
 
-        regentlib.assert(not [bool](isnan(r_gridbarp[e6].g)), "Step 1a\n")
-        regentlib.assert(not [bool](isnan(r_gridbarp[e6].b)), "Step 1a\n")
+      --   regentlib.assert(not [bool](isnan(r_gridbarp[e6].g)), "Step 1a\n")
+      --   regentlib.assert(not [bool](isnan(r_gridbarp[e6].b)), "Step 1a\n")
     
-      end
+      -- end
 
     end
   end
@@ -1673,6 +1673,7 @@ end
 -- Compute phibar at interface from phibarplus.
 
 -- x Gradient
+__demand(__cuda, __leaf)
 task Step1b_sigx(r_gridbarp : region(ispace(int8d), grid),
             r_sig : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -1698,12 +1699,10 @@ do
   var xR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -1783,21 +1782,22 @@ do
       r_sig[e7].g = VanLeer(gbpL, r_gridbarp[e6].g, gbpR, xL, xC, xR)
       r_sig[e7].b = VanLeer(bbpL, r_gridbarp[e6].b, bbpR, xL, xC, xR)
 
-      -- NaN checker
-      if (isnan(r_sig[e7].g) == 1 or isnan(r_sig[e7].b) == 1) then
+      -- -- NaN checker
+      -- if (isnan(r_sig[e7].g) == 1 or isnan(r_sig[e7].b) == 1) then
 
-        c.printf("Step 1b_sigx: r_sig.g = %f, r_sig.b = %f\n", r_sig[e7].g, r_sig[e7].b)
+      --   c.printf("Step 1b_sigx: r_sig.g = %f, r_sig.b = %f\n", r_sig[e7].g, r_sig[e7].b)
 
-        regentlib.assert(not [bool](isnan(r_sig[e7].g)), "Step 1b_sigx\n")
-        regentlib.assert(not [bool](isnan(r_sig[e7].b)), "Step 1b_sigx\n")
+      --   regentlib.assert(not [bool](isnan(r_sig[e7].g)), "Step 1b_sigx\n")
+      --   regentlib.assert(not [bool](isnan(r_sig[e7].b)), "Step 1b_sigx\n")
 
-      end
+      -- end
   
     end
   end
 end
 
 -- y Gradient
+__demand(__cuda, __leaf)
 task Step1b_sigy(r_gridbarp : region(ispace(int8d), grid),
             r_sig : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -1822,12 +1822,10 @@ do
   var yR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   -- Indices
   var bc : int32[6]
@@ -1903,21 +1901,22 @@ do
       r_sig[e7].g = VanLeer(gbpL, r_gridbarp[e6].g, gbpR, yL, yC, yR)
       r_sig[e7].b = VanLeer(bbpL, r_gridbarp[e6].b, bbpR, yL, yC, yR)
 
-      -- NaN checker
-      if (isnan(r_sig[e7].g) == 1 or isnan(r_sig[e7].b) == 1) then
+      -- -- NaN checker
+      -- if (isnan(r_sig[e7].g) == 1 or isnan(r_sig[e7].b) == 1) then
 
-        c.printf("Step 1b_sigy: r_sig.g = %f, r_sig.b = %f\n", r_sig[e7].g, r_sig[e7].b)
+      --   c.printf("Step 1b_sigy: r_sig.g = %f, r_sig.b = %f\n", r_sig[e7].g, r_sig[e7].b)
 
-        regentlib.assert(not [bool](isnan(r_sig[e7].g)), "Step 1b_sigy\n")
-        regentlib.assert(not [bool](isnan(r_sig[e7].b)), "Step 1b_sigy\n")
+      --   regentlib.assert(not [bool](isnan(r_sig[e7].g)), "Step 1b_sigy\n")
+      --   regentlib.assert(not [bool](isnan(r_sig[e7].b)), "Step 1b_sigy\n")
 
-      end
+      -- end
   
     end
   end
 end
 
 -- z Gradient
+__demand(__cuda, __leaf)
 task Step1b_sigz(r_gridbarp : region(ispace(int8d), grid),
             r_sig : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -1942,12 +1941,10 @@ do
   var zR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -2027,15 +2024,15 @@ do
       r_sig[e7].g = VanLeer(gbpL, r_gridbarp[e6].g, gbpR, zL, zC, zR)
       r_sig[e7].b = VanLeer(bbpL, r_gridbarp[e6].b, bbpR, zL, zC, zR)
 
-      -- NaN checker
-      if (isnan(r_sig[e7].g) == 1 or isnan(r_sig[e7].b) == 1) then
+      -- -- NaN checker
+      -- if (isnan(r_sig[e7].g) == 1 or isnan(r_sig[e7].b) == 1) then
 
-        c.printf("Step 1b_sigz: r_sig.g = %f, r_sig.b = %f\n", r_sig[e7].g, r_sig[e7].b)
+      --   c.printf("Step 1b_sigz: r_sig.g = %f, r_sig.b = %f\n", r_sig[e7].g, r_sig[e7].b)
 
-        regentlib.assert(not [bool](isnan(r_sig[e7].g)), "Step 1b_sigz\n")
-        regentlib.assert(not [bool](isnan(r_sig[e7].b)), "Step 1b_sigz\n")
+      --   regentlib.assert(not [bool](isnan(r_sig[e7].g)), "Step 1b_sigz\n")
+      --   regentlib.assert(not [bool](isnan(r_sig[e7].b)), "Step 1b_sigz\n")
 
-      end
+      -- end
   
     end
   end
@@ -2047,6 +2044,7 @@ end
 -- i.e. VL(d_y VL(d_x(field))) != VL(d_x VL(d_y(field))) if VL is nonlinear
 
 -- x Gradient of sigx
+__demand(__cuda, __leaf)
 task Step1b_sigx_x(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -2074,12 +2072,10 @@ do
   var xR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -2164,6 +2160,7 @@ do
 end
 
 -- x Gradient of sigy
+__demand(__cuda, __leaf)
 task Step1b_sigy_x(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -2191,12 +2188,10 @@ do
   var xR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -2282,6 +2277,7 @@ end
 
 
 -- x Gradient of sigz
+__demand(__cuda, __leaf)
 task Step1b_sigz_x(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -2309,12 +2305,10 @@ do
   var xR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -2399,6 +2393,7 @@ do
 end
 
 -- y Gradient of sigx
+__demand(__cuda, __leaf)
 task Step1b_sigx_y(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -2426,12 +2421,10 @@ do
   var yR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -2516,6 +2509,7 @@ do
 end
 
 -- y Gradient of sigy
+__demand(__cuda, __leaf)
 task Step1b_sigy_y(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -2543,12 +2537,10 @@ do
   var yR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -2633,6 +2625,7 @@ do
 end
 
 -- y Gradient of sigz
+__demand(__cuda, __leaf)
 task Step1b_sigz_y(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -2660,12 +2653,10 @@ do
   var yR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -2750,6 +2741,7 @@ do
 end
 
 -- z Gradient of sigx
+__demand(__cuda, __leaf)
 task Step1b_sigx_z(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -2777,12 +2769,10 @@ do
   var zR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -2867,6 +2857,7 @@ do
 end
 
 -- z Gradient of sigy
+__demand(__cuda, __leaf)
 task Step1b_sigy_z(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -2894,12 +2885,10 @@ do
   var zR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -2984,6 +2973,7 @@ do
 end
 
 -- z Gradient of sigz
+__demand(__cuda, __leaf)
 task Step1b_sigz_z(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_mesh : region(ispace(int8d), mesh),
@@ -3011,12 +3001,10 @@ do
   var zR : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -3104,6 +3092,7 @@ end
 -- Now use Hessian to interpolate gradient to boundary 
 
 -- sigx at x-boundary
+__demand(__cuda, __leaf)
 task Step1b_sigx_x2(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_sigb : region(ispace(int8d), grid),
@@ -3125,12 +3114,10 @@ do
   var Dim2 : int32 = 0
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -3210,6 +3197,7 @@ do
 end
 
 -- sigy at x boundary
+__demand(__cuda, __leaf)
 task Step1b_sigy_x2(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_sigb : region(ispace(int8d), grid),
@@ -3231,12 +3219,10 @@ do
   var Dim2 : int32 = 0
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -3316,6 +3302,7 @@ do
 end
 
 -- sigz at x-boundary
+__demand(__cuda, __leaf)
 task Step1b_sigz_x2(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_sigb : region(ispace(int8d), grid),
@@ -3337,12 +3324,10 @@ do
   var Dim2 : int32 = 0
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -3422,6 +3407,7 @@ do
 end
 
 -- sigx at y-boundary
+__demand(__cuda, __leaf)
 task Step1b_sigx_y2(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_sigb : region(ispace(int8d), grid),
@@ -3443,12 +3429,10 @@ do
   var Dim2 : int32 = 1
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -3528,6 +3512,7 @@ do
 end
 
 -- sigy at y-boundary
+__demand(__cuda, __leaf)
 task Step1b_sigy_y2(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_sigb : region(ispace(int8d), grid),
@@ -3549,12 +3534,10 @@ do
   var Dim2 : int32 = 1
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -3634,6 +3617,7 @@ do
 end
 
 -- sigz at y-boundary
+__demand(__cuda, __leaf)
 task Step1b_sigz_y2(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_sigb : region(ispace(int8d), grid),
@@ -3655,12 +3639,10 @@ do
   var Dim2 : int32 = 1
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -3740,6 +3722,7 @@ do
 end
 
 -- sigx at z-boundary
+__demand(__cuda, __leaf)
 task Step1b_sigx_z2(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_sigb : region(ispace(int8d), grid),
@@ -3761,12 +3744,10 @@ do
   var Dim2 : int32 = 2
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -3846,6 +3827,7 @@ do
 end
 
 -- sigy at z-boundary
+__demand(__cuda, __leaf)
 task Step1b_sigy_z2(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_sigb : region(ispace(int8d), grid),
@@ -3867,12 +3849,10 @@ do
   var Dim2 : int32 = 2
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -3952,6 +3932,7 @@ do
 end
 
 -- sigz at z-boundary
+__demand(__cuda, __leaf)
 task Step1b_sigz_z2(r_sig : region(ispace(int8d), grid),
             r_sig2 : region(ispace(int8d), grid),
             r_sigb : region(ispace(int8d), grid),
@@ -3973,12 +3954,10 @@ do
   var Dim2 : int32 = 2
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -4060,6 +4039,7 @@ end
 -- Now that we have gradients at cell center and at boundary,
 -- several things are computed.
 -- First, interpolate phibarplus to boundary.
+__demand(__cuda, __leaf)
 task Step1b_b(r_sig : region(ispace(int8d), grid),
               r_mesh : region(ispace(int8d), mesh),
               r_gridbarp : region(ispace(int8d), grid),
@@ -4084,12 +4064,10 @@ where
 do
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -4226,12 +4204,10 @@ do
   var Xi : double[3]
   
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_gridbarpb.bounds.lo.x, r_gridbarpb.bounds.lo.y, r_gridbarpb.bounds.lo.z}
-  var shi : int3d = {r_gridbarpb.bounds.hi.x, r_gridbarpb.bounds.hi.y, r_gridbarpb.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_gridbarpb.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -4257,8 +4233,8 @@ do
           r_gridbarpb[e7].g = r_gridbarpb[e7].g - dt/2.0*Xi[Dim]*r_sigb[e8].g
           r_gridbarpb[e7].b = r_gridbarpb[e7].b - dt/2.0*Xi[Dim]*r_sigb[e8].b
     
-          regentlib.assert(not [bool](isnan(r_gridbarpb[e7].g)), "Step 1c\n")
-          regentlib.assert(not [bool](isnan(r_gridbarpb[e7].b)), "Step 1c\n")
+          -- regentlib.assert(not [bool](isnan(r_gridbarpb[e7].g)), "Step 1c\n")
+          -- regentlib.assert(not [bool](isnan(r_gridbarpb[e7].b)), "Step 1c\n")
         
         end 
       end 
@@ -4268,6 +4244,7 @@ end
 
 --Step 2: Microflux
 --Step 2a: Compute W at interface.
+__demand(__cuda, __leaf)
 task Step2a(r_gridbarpb : region(ispace(int8d), grid),
             vxmesh : region(ispace(int2d), vmesh),
             vymesh : region(ispace(int2d), vmesh),
@@ -4279,12 +4256,10 @@ where
   reads writes(r_Wb)
 do    
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_Wb.bounds.lo.x, r_Wb.bounds.lo.y, r_Wb.bounds.lo.z}
-  var shi : int3d = {r_Wb.bounds.hi.x, r_Wb.bounds.hi.y, r_Wb.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_Wb.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -4343,22 +4318,23 @@ do
     end
   end
 
-  -- NaN checker
-  for e in r_Wb do
+  -- -- NaN checker
+  -- for e in r_Wb do
     
-    regentlib.assert(not [bool](isnan(r_Wb[e].rho)), "Step 2a rho\n")
-    regentlib.assert(not [bool](isnan(r_Wb[e].rhov[0])), "Step 2a rhov0\n")
-    regentlib.assert(not [bool](isnan(r_Wb[e].rhov[1])), "Step 2a rhov1\n")
-    regentlib.assert(not [bool](isnan(r_Wb[e].rhov[2])), "Step 2a rhov2\n")
-    regentlib.assert(not [bool](isnan(r_Wb[e].rhoE)), "Step 2a rhoE\n")
+  --   regentlib.assert(not [bool](isnan(r_Wb[e].rho)), "Step 2a rho\n")
+  --   regentlib.assert(not [bool](isnan(r_Wb[e].rhov[0])), "Step 2a rhov0\n")
+  --   regentlib.assert(not [bool](isnan(r_Wb[e].rhov[1])), "Step 2a rhov1\n")
+  --   regentlib.assert(not [bool](isnan(r_Wb[e].rhov[2])), "Step 2a rhov2\n")
+  --   regentlib.assert(not [bool](isnan(r_Wb[e].rhoE)), "Step 2a rhoE\n")
     
-  end
+  -- end
 
 end
 
 -- Step 2b: compute original phi at interface using gbar, W at interface
 -- Note: Memory is being recycled, i.e. the gridbarpb region originally used to
 -- store phibarplus is now being used to store phibar
+__demand(__cuda, __leaf)
 task Step2b(r_gridbarpb : region(ispace(int8d), grid), 
             r_Wb      : region(ispace(int8d), W),
             vxmesh    : region(ispace(int2d), vmesh),
@@ -4372,12 +4348,10 @@ where
   reads(r_Wb, vxmesh, vymesh, vzmesh)
 do
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_Wb.bounds.lo.x, r_Wb.bounds.lo.y, r_Wb.bounds.lo.z}
-  var shi : int3d = {r_Wb.bounds.hi.x, r_Wb.bounds.hi.y, r_Wb.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_Wb.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -4416,11 +4390,11 @@ do
       
       -- Compute Temeprature
       T = Temperature(r_Wb[e4].rhoE/r_Wb[e4].rho, u, g, R)
-      if T < 0 then
-        -- Stop Simulation if Negative Temperature
-        c.printf("T < 0, r_Wb[{%d, %d, %d, %d}].rhoE = %f, r_Wb[e4].rho = %f, u = %f, g = %f, R = %f\n", e4.x, e4.y, e4.z, e4.w, r_Wb[e4].rhoE, r_Wb[e4].rho, u, g, R)
-        regentlib.assert(T >= 0, "Negative Temperature\n")
-      end
+      -- if T < 0 then
+      --   -- Stop Simulation if Negative Temperature
+      --   c.printf("T < 0, r_Wb[{%d, %d, %d, %d}].rhoE = %f, r_Wb[e4].rho = %f, u = %f, g = %f, R = %f\n", e4.x, e4.y, e4.z, e4.w, r_Wb[e4].rhoE, r_Wb[e4].rho, u, g, R)
+      --   regentlib.assert(T >= 0, "Negative Temperature\n")
+      -- end
 
       -- Compute Relaxation Times
       tg = visc(T, ur, Tr, w)/r_Wb[e4].rho/R/T
@@ -4449,28 +4423,28 @@ do
           b_eq = g_eq*(Xi[0]*Xi[0] + Xi[1]*Xi[1] + Xi[2]*Xi[2] + (3.0-effD+K)*R*T)/2.0
         end
 
-        if (isnan(g_eq) == 1 or isnan(b_eq) == 1) then
+        -- if (isnan(g_eq) == 1 or isnan(b_eq) == 1) then
 
-          c.printf("c2 = %f, r_Wb[e4].rho = %f, T = %f, R = %f, effD = %d\n", c2, r_Wb[e4].rho, T, R, effD) 
+        --   c.printf("c2 = %f, r_Wb[e4].rho = %f, T = %f, R = %f, effD = %d\n", c2, r_Wb[e4].rho, T, R, effD) 
       
-          regentlib.assert(not  [bool](isnan(g_eq)), "Step 2b: g_eq\n")
-          regentlib.assert(not  [bool](isnan(b_eq)), "Step 2b: b_eq\n")
+        --   regentlib.assert(not  [bool](isnan(g_eq)), "Step 2b: g_eq\n")
+        --   regentlib.assert(not  [bool](isnan(b_eq)), "Step 2b: b_eq\n")
     
-        end
+        -- end
 
         -- Compute phi from phibar
         -- Recall: this is actually the original distribution function, recycling memory from gbar/bbar
         r_gridbarpb[e7].g = 2*tg/(2*tg + dt/2.)*r_gridbarpb[e7].g + dt/(4*tg + dt)*g_eq + dt*tg/(4*tg + dt)*0 -- TODO replace this last *0 with source term 
         r_gridbarpb[e7].b = 2*tb/(2*tb + dt/2.)*r_gridbarpb[e7].b + dt/(4*tb + dt)*b_eq + dt*tb/(4*tb + dt)*0 -- TODO replace this last *0 with source term
 
-        if (isnan(r_gridbarpb[e7].g) == 1 or isnan(r_gridbarpb[e7].b) == 1) then
+        -- if (isnan(r_gridbarpb[e7].g) == 1 or isnan(r_gridbarpb[e7].b) == 1) then
 
-          c.printf("gbar = %.10f, bbar = %.10f, g_eq = %.10f, tg = %.10f, tb = %.10f\n", r_gridbarpb[e7].g, r_gridbarpb[e7].b, g_eq, tg, tb)
+        --   c.printf("gbar = %.10f, bbar = %.10f, g_eq = %.10f, tg = %.10f, tb = %.10f\n", r_gridbarpb[e7].g, r_gridbarpb[e7].b, g_eq, tg, tb)
       
-          regentlib.assert(not [bool](isnan(r_gridbarpb[e7].g)), "Step 2b: gridbarpb_g\n")
-          regentlib.assert(not [bool](isnan(r_gridbarpb[e7].b)), "Step 2b: gridbarpb_b\n")
+        --   regentlib.assert(not [bool](isnan(r_gridbarpb[e7].g)), "Step 2b: gridbarpb_g\n")
+        --   regentlib.assert(not [bool](isnan(r_gridbarpb[e7].b)), "Step 2b: gridbarpb_b\n")
     
-        end
+        -- end
 
       end
     end 
@@ -4479,6 +4453,7 @@ end
 
 -- Now that we have phi at the interface, we can compute the flux ~ phi * Xi * Area
 -- Step 2c: Compute Microflux F at interface at half timestep using W/phi at interface.
+__demand(__cuda, __leaf)
 task Step2c(r_gridbarpb : region(ispace(int8d), grid),
             r_F       : region(ispace(int8d), grid),
             r_mesh    : region(ispace(int8d), mesh),
@@ -4498,12 +4473,10 @@ do
   var Xi : double[3]  -- Velocity Vector
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_mesh.bounds.lo.x, r_mesh.bounds.lo.y, r_mesh.bounds.lo.z}
-  var shi : int3d = {r_mesh.bounds.hi.x, r_mesh.bounds.hi.y, r_mesh.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_mesh.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -4619,14 +4592,15 @@ do
         r_F[e6].g = r_F[e6].g + Xi[Dim]*A[Dim]*(right*r_gridbarpb[e7].g - left*gL)
         r_F[e6].b = r_F[e6].b + Xi[Dim]*A[Dim]*(right*r_gridbarpb[e7].b - left*bL)
 
-        regentlib.assert(not [bool](isnan(r_F[e6].g)), "Step 2c\n")
-        regentlib.assert(not [bool](isnan(r_F[e6].b)), "Step 2c\n")
+        -- regentlib.assert(not [bool](isnan(r_F[e6].g)), "Step 2c\n")
+        -- regentlib.assert(not [bool](isnan(r_F[e6].b)), "Step 2c\n")
 
       end 
     end
   end 
 end
 
+__demand(__cuda, __leaf)
 task Step3()
  -- TODO : External Forces
 end
@@ -4635,6 +4609,7 @@ end
 -- Step 5: Update phi at cell center at next time step
 -- Note: Updating phi was broken up into two steps for easier readability.
 -- The two steps involve new and old quantities, respectively.
+__demand(__cuda, __leaf)
 task Step4and5(r_grid : region(ispace(int8d), grid),
                r_W    : region(ispace(int8d), W),
                r_mesh : region(ispace(int8d), mesh),
@@ -4670,12 +4645,10 @@ do
   var b_eqo : double
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_F.bounds.lo.x, r_F.bounds.lo.y, r_F.bounds.lo.z}
-  var shi : int3d = {r_F.bounds.hi.x, r_F.bounds.hi.y, r_F.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_F.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
@@ -4701,11 +4674,11 @@ do
       uo += r_W[e3].rhov[d]/r_W[e3].rho*r_W[e3].rhov[d]/r_W[e3].rho
     end
     uo = sqrt(uo)
-    regentlib.assert(bool(uo>=0), "uo")
+    -- regentlib.assert(bool(uo>=0), "uo")
 
     -- Compute Old Temperature
     To = Temperature(r_W[e3].rhoE/r_W[e3].rho, uo, g, R)
-    regentlib.assert(bool(To>=0), "To")
+    -- regentlib.assert(bool(To>=0), "To")
   
     -- Compute Old Timescales
     tgo = visc(To, ur, Tr, w)/r_W[e3].rho/R/To
@@ -4809,15 +4782,15 @@ do
       u += r_W[e3].rhov[d]/r_W[e3].rho*r_W[e3].rhov[d]/r_W[e3].rho
     end
     u = sqrt(u)
-    regentlib.assert(bool(u>=0), "u")
+    -- regentlib.assert(bool(u>=0), "u")
 
     -- Compute New Temperature
     T = Temperature(r_W[e3].rhoE/r_W[e3].rho, u, g, R)
-    if T < 0 then
-      -- Stop Simulation if Negative Temperature
-      c.printf("r_W[%d].rhoE = %f, r_W[e3].rho = %f, u = %f, g = %f, R = %f\n", e3.x, r_W[e3].rhoE, r_W[e3].rho, u, g, R)
-    end
-    regentlib.assert(bool(T>=0), "T")
+    -- if T < 0 then
+    --   -- Stop Simulation if Negative Temperature
+    --   c.printf("r_W[%d].rhoE = %f, r_W[e3].rho = %f, u = %f, g = %f, R = %f\n", e3.x, r_W[e3].rhoE, r_W[e3].rho, u, g, R)
+    -- end
+    -- regentlib.assert(bool(T>=0), "T")
 
     -- Compute New Taus
     tg = visc(T, ur, Tr, w)/r_W[e3].rho/R/T 
@@ -4867,14 +4840,14 @@ do
 
       end
 
-      if isnan(r_grid[e6].g) == 1 then
-        c.printf("Step4and5: g_eq = %f, tg = %f, tgo = %f, r_F[e6].g = %f\n", g_eq, tg, tgo, r_F[e6].g)
-      end 
-      if isnan(r_grid[e6].b) == 1 then
-        c.printf("Step4and5: b_eq = %f, tb = %f, tbo = %f, r_F[e6].b = %f\n", b_eq, tb, tbo, r_F[e6].b)
-      end 
-      regentlib.assert(not [bool](isnan(r_grid[e6].g)), "Step4and5\n")
-      regentlib.assert(not [bool](isnan(r_grid[e6].b)), "Step4and5\n")
+      -- if isnan(r_grid[e6].g) == 1 then
+      --   c.printf("Step4and5: g_eq = %f, tg = %f, tgo = %f, r_F[e6].g = %f\n", g_eq, tg, tgo, r_F[e6].g)
+      -- end 
+      -- if isnan(r_grid[e6].b) == 1 then
+      --   c.printf("Step4and5: b_eq = %f, tb = %f, tbo = %f, r_F[e6].b = %f\n", b_eq, tb, tbo, r_F[e6].b)
+      -- end 
+      -- regentlib.assert(not [bool](isnan(r_grid[e6].g)), "Step4and5\n")
+      -- regentlib.assert(not [bool](isnan(r_grid[e6].b)), "Step4and5\n")
     end
   end
 
@@ -5093,7 +5066,7 @@ do
 end
 
 
-
+__demand(__cuda, __leaf)
 task MaxwellianInitialization(r_grid  : region(ispace(int8d), grid),
          r_mesh : region(ispace(int8d), mesh),
          r_W    : region(ispace(int8d), W),
@@ -5113,12 +5086,10 @@ do
   var Xi : double[3] -- Velocity Vector
 
   -- Generate Index Spaces for Iteration
-  var slo : int3d = {r_grid.bounds.lo.x, r_grid.bounds.lo.y, r_grid.bounds.lo.z}
-  var shi : int3d = {r_grid.bounds.hi.x, r_grid.bounds.hi.y, r_grid.bounds.hi.z}
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
-  var s3 = ispace(int3d, shi - slo + {1,1,1}, slo)
-  var v3 = ispace(int3d, vhi - vlo + {1,1,1}, vlo)
+  var s3 = r_grid.ispace
+  var v3 = rect3d { vlo, vhi }
 
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
