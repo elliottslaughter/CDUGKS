@@ -3874,7 +3874,7 @@ end
 
 --Step 2: Microflux
 --Step 2a: Compute W at interface.
-__demand(__cuda, __leaf)
+--__demand(__cuda, __leaf)
 task Step2a(r_gridbarpb : region(ispace(int8d), grid),
             vxmesh : region(ispace(int2d), vmesh),
             vymesh : region(ispace(int2d), vmesh),
