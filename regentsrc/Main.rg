@@ -3874,7 +3874,7 @@ end
 
 --Step 2: Microflux
 --Step 2a: Compute W at interface.
---__demand(__cuda, __leaf)
+__demand(__cuda, __leaf)
 task Step2a(r_gridbarpb : region(ispace(int8d), grid),
             vxmesh : region(ispace(int2d), vmesh),
             vymesh : region(ispace(int2d), vmesh),
@@ -3898,6 +3898,14 @@ do
   -- First compute density at boundary; density is needed for others.
   -- Initialize with zero, then iterate over contributions in velocity space
   for s in s3 do
+    -- HACK: This is working around a CUDA code generator bug where a region
+    -- access is required at the outermost loop for the code generation to
+    -- trigger properly. We just set something here to make sure codegen is
+    -- happy.
+    var e4_0 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    r_Wb[e4_0].rhoE = 0
+    -- END HACK
+
     for Dim = 0, effD do
       var e4 = int8d {s.x, s.y, s.z, Dim, 0, 0, 0, 0}
       r_Wb[e4].rho = 0
@@ -3914,6 +3922,14 @@ do
   -- Then compute momentum and energy
   -- Initialize, then iterate over contributions in velocity space
   for s in s3 do
+    -- HACK: This is working around a CUDA code generator bug where a region
+    -- access is required at the outermost loop for the code generation to
+    -- trigger properly. We just set something here to make sure codegen is
+    -- happy.
+    var e4_0 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    r_Wb[e4_0].rhoE = 0
+    -- END HACK
+
     var U : double[3]
     for Dim = 0, effD do
 
