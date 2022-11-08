@@ -1561,30 +1561,26 @@ do
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
-
-  -- Relaxation Times
-  var tg : double
-  var tb : double
-  var tgb : double
-
-  var c2 : double    -- Peculiar Velocity squared
-  var u : double     -- Bulk Velocity
-  var T : double     -- Temperature
-  var Xi : double[3] -- Discrete Velocity
-  var Z : double     -- Auxilary energy term, see energy distribution PDE in paper
-
-  -- Indices
-  var e3 : int8d
-  var e6 : int8d 
-
-  -- Equilbrium Distributions
-  var g_eq : double 
-  var b_eq : double
   
   for s in s3 do
 
+    -- Relaxation Times
+    var tg : double
+    var tb : double
+    var tgb : double
+
+    var c2 : double    -- Peculiar Velocity squared
+    var u : double     -- Bulk Velocity
+    var T : double     -- Temperature
+    var Xi : double[3] -- Discrete Velocity
+    var Z : double     -- Auxilary energy term, see energy distribution PDE in paper
+
+    -- Equilbrium Distributions
+    var g_eq : double 
+    var b_eq : double
+
     -- Construct Spatial Index
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
 
     -- Compute Bulk Speed
     u = 0
@@ -1613,7 +1609,7 @@ do
     end
 
     for v in v3 do
-      e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
+      var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
 
       -- Compute Peculiar Velocity squared
       c2 = 0
@@ -1693,11 +1689,6 @@ do
   -- Gradient Axis
   var Dim : int32 = 0 
 
-  -- Cell Centers 
-  var xC : double
-  var xL : double
-  var xR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -1708,53 +1699,40 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e6 : int8d 
-  var e7 : int8d 
-  var eL6 : int8d 
-  var eR6  : int8d
-
-  -- Left/Right values of g/b
-  var gbpL : double
-  var gbpR : double
-  var bbpL : double
-  var bbpR : double
-
   for s in s3 do
+
+    -- Cell Centers 
+    var xC : double
+    var xL : double
+    var xR : double
     
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    -- Left/Right values of g/b
+    var gbpL : double
+    var gbpR : double
+    var bbpL : double
+    var bbpR : double
+    
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     xC = r_mesh[e3].x
   
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3] 
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3] 
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
       
-      e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      eL6 = {IL, JL, KL, 0, 0, v.x, v.y, v.z}
-      eR6 = {IR, JR, KR, 0, 0, v.x, v.y, v.z}
+      var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var eL6 = int8d {IL, JL, KL, 0, 0, v.x, v.y, v.z}
+      var eR6 = int8d {IR, JR, KR, 0, 0, v.x, v.y, v.z}
 
       -- Gather Left Values 
       if r_gridbarp.bounds.lo.x == s.x then
@@ -1816,64 +1794,46 @@ do
   -- Gradient Axis
   var Dim : int32 = 1
 
-  -- Cell Centers 
-  var yC : double
-  var yL : double
-  var yR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
   var s3 = r_mesh.ispace
   var v3 = rect3d { vlo, vhi }
-
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e6 : int8d 
-  var e7 : int8d 
-  var eL6 : int8d 
-  var eR6  : int8d
-
-  -- Left/Right values of g/b
-  var gbpL : double
-  var gbpR : double
-  var bbpL : double
-  var bbpR : double
   
   for s in s3 do
+
+    -- Cell Centers 
+    var yC : double
+    var yL : double
+    var yR : double
+
+    -- Left/Right values of g/b
+    var gbpL : double
+    var gbpR : double
+    var bbpL : double
+    var bbpR : double
     
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     yC = r_mesh[e3].y
   
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3] 
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3] 
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
       
-      e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      eL6 = {IL, JL, KL, 0, 0, v.x, v.y, v.z}
-      eR6 = {IR, JR, KR, 0, 0, v.x, v.y, v.z}
+      var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var eL6 = int8d {IL, JL, KL, 0, 0, v.x, v.y, v.z}
+      var eR6 = int8d {IR, JR, KR, 0, 0, v.x, v.y, v.z}
 
       -- Gather Left Values
       if r_gridbarp.bounds.lo.y == s.y then
@@ -1935,11 +1895,6 @@ do
   -- Gradient Axis
   var Dim : int32 = 2
 
-  -- Cell Centers 
-  var zC : double
-  var zL : double
-  var zR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -1949,54 +1904,41 @@ do
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
-
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e6 : int8d 
-  var e7 : int8d 
-  var eL6 : int8d 
-  var eR6  : int8d
-
-  -- Left/Right values of g/b
-  var gbpL : double
-  var gbpR : double
-  var bbpL : double
-  var bbpR : double
   
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    -- Cell Centers 
+    var zC : double
+    var zL : double
+    var zR : double
+
+    -- Left/Right values of g/b
+    var gbpL : double
+    var gbpR : double
+    var bbpL : double
+    var bbpR : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     zC = r_mesh[e3].z
   
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3] 
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3] 
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
       
-      e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      eL6 = {IL, JL, KL, 0, 0, v.x, v.y, v.z}
-      eR6 = {IR, JR, KR, 0, 0, v.x, v.y, v.z}
+      var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var eL6 = int8d {IL, JL, KL, 0, 0, v.x, v.y, v.z}
+      var eR6 = int8d {IR, JR, KR, 0, 0, v.x, v.y, v.z}
 
       -- Gather Left Values 
       if r_gridbarp.bounds.lo.z == s.z then
@@ -2066,11 +2008,6 @@ do
   var Dim : int32 = 0
   var Dim2 : int32 = 0
 
-  -- Cell Centers
-  var xC : double
-  var xL : double
-  var xR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -2081,53 +2018,40 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e7 : int8d 
-  var e8 : int8d 
-  var eL7 : int8d 
-  var eR7  : int8d
-
-  -- Left/Right values of g/b
-  var gsigL : double
-  var gsigR : double
-  var bsigL : double
-  var bsigR : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    -- Cell Centers
+    var xC : double
+    var xL : double
+    var xR : double
+
+    -- Left/Right values of g/b
+    var gsigL : double
+    var gsigR : double
+    var bsigL : double
+    var bsigR : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     xC = r_mesh[e3].x
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eL7 = {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eL7 = int8d {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
      
       -- Gather Left Values
       if r_sig.bounds.lo.x == s.x then
@@ -2182,11 +2106,6 @@ do
   var Dim : int32 = 1
   var Dim2 : int32 = 0
 
-  -- Cell Centers
-  var xC : double
-  var xL : double
-  var xR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -2197,53 +2116,40 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e7 : int8d 
-  var e8 : int8d 
-  var eL7 : int8d 
-  var eR7  : int8d
-
-  -- Left/Right values of g/b
-  var gsigL : double
-  var gsigR : double
-  var bsigL : double
-  var bsigR : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    -- Cell Centers
+    var xC : double
+    var xL : double
+    var xR : double
+
+    -- Left/Right values of g/b
+    var gsigL : double
+    var gsigR : double
+    var bsigL : double
+    var bsigR : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     xC = r_mesh[e3].x
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eL7 = {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eL7 = int8d {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
      
       -- Gather Left Values
       if r_sig.bounds.lo.x == s.x then
@@ -2299,11 +2205,6 @@ do
   var Dim : int32 = 2
   var Dim2 : int32 = 0
 
-  -- Cell Centers
-  var xC : double
-  var xL : double
-  var xR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -2314,53 +2215,40 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e7 : int8d 
-  var e8 : int8d 
-  var eL7 : int8d 
-  var eR7  : int8d
-
-  -- Left/Right values of g/b
-  var gsigL : double
-  var gsigR : double
-  var bsigL : double
-  var bsigR : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    -- Cell Centers
+    var xC : double
+    var xL : double
+    var xR : double
+
+    -- Left/Right values of g/b
+    var gsigL : double
+    var gsigR : double
+    var bsigL : double
+    var bsigR : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     xC = r_mesh[e3].x
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eL7 = {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eL7 = int8d {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
      
       -- Gather Left Values
       if r_sig.bounds.lo.x == s.x then
@@ -2415,11 +2303,6 @@ do
   var Dim : int32 = 0
   var Dim2 : int32 = 1
 
-  -- Cell Centers
-  var yC : double
-  var yL : double
-  var yR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -2430,53 +2313,40 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e7 : int8d 
-  var e8 : int8d 
-  var eL7 : int8d 
-  var eR7  : int8d
-
-  -- Left/Right values of g/b
-  var gsigL : double
-  var gsigR : double
-  var bsigL : double
-  var bsigR : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    -- Cell Centers
+    var yC : double
+    var yL : double
+    var yR : double
+
+    -- Left/Right values of g/b
+    var gsigL : double
+    var gsigR : double
+    var bsigL : double
+    var bsigR : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     yC = r_mesh[e3].y
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3  = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3  = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eL7 = {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eL7 = int8d {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
      
       -- Gather Left Values
       if r_sig.bounds.lo.y == s.y then
@@ -2531,11 +2401,6 @@ do
   var Dim : int32 = 1
   var Dim2 : int32 = 1
 
-  -- Cell Centers
-  var yC : double
-  var yL : double
-  var yR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -2546,53 +2411,40 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e7 : int8d 
-  var e8 : int8d 
-  var eL7 : int8d 
-  var eR7  : int8d
-
-  -- Left/Right values of g/b
-  var gsigL : double
-  var gsigR : double
-  var bsigL : double
-  var bsigR : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    -- Cell Centers
+    var yC : double
+    var yL : double
+    var yR : double
+
+    -- Left/Right values of g/b
+    var gsigL : double
+    var gsigR : double
+    var bsigL : double
+    var bsigR : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     yC = r_mesh[e3].y
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eL7 = {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eL7 = int8d {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
      
       -- Gather Left Values
       if r_sig.bounds.lo.y == s.y then
@@ -2647,11 +2499,6 @@ do
   var Dim : int32 = 2
   var Dim2 : int32 = 1
 
-  -- Cell Centers
-  var yC : double
-  var yL : double
-  var yR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -2662,53 +2509,40 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e7 : int8d 
-  var e8 : int8d 
-  var eL7 : int8d 
-  var eR7  : int8d
-
-  -- Left/Right values of g/b
-  var gsigL : double
-  var gsigR : double
-  var bsigL : double
-  var bsigR : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    -- Cell Centers
+    var yC : double
+    var yL : double
+    var yR : double
+
+    -- Left/Right values of g/b
+    var gsigL : double
+    var gsigR : double
+    var bsigL : double
+    var bsigR : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     yC = r_mesh[e3].y
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eL7 = {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eL7 = int8d {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
      
       -- Gather Left Values
       if r_sig.bounds.lo.y == s.y then
@@ -2763,11 +2597,6 @@ do
   var Dim : int32 = 0
   var Dim2 : int32 = 2
 
-  -- Cell Centers
-  var zC : double
-  var zL : double
-  var zR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -2778,53 +2607,40 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e7 : int8d 
-  var e8 : int8d 
-  var eL7 : int8d 
-  var eR7  : int8d
-
-  -- Left/Right values of g/b
-  var gsigL : double
-  var gsigR : double
-  var bsigL : double
-  var bsigR : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    -- Cell Centers
+    var zC : double
+    var zL : double
+    var zR : double
+
+    -- Left/Right values of g/b
+    var gsigL : double
+    var gsigR : double
+    var bsigL : double
+    var bsigR : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     zC = r_mesh[e3].z
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eL7 = {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eL7 = int8d {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
      
       -- Gather Left Values
       if r_sig.bounds.lo.z == s.z then
@@ -2879,11 +2695,6 @@ do
   var Dim : int32 = 1
   var Dim2 : int32 = 2
 
-  -- Cell Centers
-  var zC : double
-  var zL : double
-  var zR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -2894,53 +2705,40 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e7 : int8d 
-  var e8 : int8d 
-  var eL7 : int8d 
-  var eR7  : int8d
-
-  -- Left/Right values of g/b
-  var gsigL : double
-  var gsigR : double
-  var bsigL : double
-  var bsigR : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    -- Cell Centers
+    var zC : double
+    var zL : double
+    var zR : double
+
+    -- Left/Right values of g/b
+    var gsigL : double
+    var gsigR : double
+    var bsigL : double
+    var bsigR : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     zC = r_mesh[e3].z
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eL7 = {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eL7 = int8d {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
      
       -- Gather Left Values
       if r_sig.bounds.lo.z == s.z then
@@ -2995,11 +2793,6 @@ do
   var Dim : int32 = 2
   var Dim2 : int32 = 2
 
-  -- Cell Centers
-  var zC : double
-  var zL : double
-  var zR : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -3010,53 +2803,40 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var bc : int32[6]
-  var IL : int32 
-  var JL : int32 
-  var KL : int32 
-  var IR : int32 
-  var JR : int32 
-  var KR : int32 
-  
-  var e3 : int8d 
-  var eL3 : int8d 
-  var eR3 : int8d 
-
-  var e7 : int8d 
-  var e8 : int8d 
-  var eL7 : int8d 
-  var eR7  : int8d
-
-  -- Left/Right values of g/b
-  var gsigL : double
-  var gsigR : double
-  var bsigL : double
-  var bsigR : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    -- Cell Centers
+    var zC : double
+    var zL : double
+    var zR : double
+
+    -- Left/Right values of g/b
+    var gsigL : double
+    var gsigR : double
+    var bsigL : double
+    var bsigR : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
     zC = r_mesh[e3].z
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IL = bc[0]
-    JL = bc[1]
-    KL = bc[2]
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IL = bc[0]
+    var JL = bc[1]
+    var KL = bc[2]
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
 
-    eL3 = {IL, JL, KL, 0, 0, 0, 0, 0}
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var eL3 = int8d {IL, JL, KL, 0, 0, 0, 0, 0}
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eL7 = {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eL7 = int8d {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
      
       -- Gather Left Values
       if r_sig.bounds.lo.z == s.z then
@@ -3123,48 +2903,33 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var sC : double
- 
-  var bc : int32[6]
-  var IR : int32
-  var JR : int32
-  var KR : int32
-  
-  var e3 : int8d
-  var e7 : int8d
-  var e8 : int8d
-  var eR3 : int8d
-  var eR7 : int8d
-  var eR8 : int8d
- 
-  var gsig : double
-  var bsig : double
-  var gsig2 : double
-  var bsig2 : double
-  var swap : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
-    sC = r_mesh[e3].dx
+
+    var gsig : double
+    var bsig : double
+    var gsig2 : double
+    var bsig2 : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var sC = r_mesh[e3].dx
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
-      eR8 = {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var eR8 = int8d {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
   
       -- If v < 0, gather right values 
       -- otherwise, use cell center values
-      swap = 1.0
+      var swap = 1.0
       if (vxmesh[{ v.x, vlo2x }].v < 0 and Dim2 == 0) then
         if s.x == r_sigb.bounds.hi.x then
           gsig = prx_sig[eR7].g
@@ -3228,48 +2993,33 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var sC : double
- 
-  var bc : int32[6]
-  var IR : int32
-  var JR : int32
-  var KR : int32
-  
-  var e3 : int8d
-  var e7 : int8d
-  var e8 : int8d
-  var eR3 : int8d
-  var eR7 : int8d
-  var eR8 : int8d
- 
-  var gsig : double
-  var bsig : double
-  var gsig2 : double
-  var bsig2 : double
-  var swap : double
-
   for s in s3 do
+
+    var gsig : double
+    var bsig : double
+    var gsig2 : double
+    var bsig2 : double
     
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
-    sC = r_mesh[e3].dx
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var sC = r_mesh[e3].dx
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
-      eR8 = {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var eR8 = int8d {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
 
       -- If v < 0, gather right values 
       -- otherwise, use cell center values
-      swap = 1.0
+      var swap = 1.0
       if (vxmesh[{ v.x, vlo2x }].v < 0 and Dim2 == 0) then
         if s.x == r_sigb.bounds.hi.x then
           gsig = prx_sig[eR7].g
@@ -3333,48 +3083,33 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var sC : double
- 
-  var bc : int32[6]
-  var IR : int32
-  var JR : int32
-  var KR : int32
-  
-  var e3 : int8d
-  var e7 : int8d
-  var e8 : int8d
-  var eR3 : int8d
-  var eR7 : int8d
-  var eR8 : int8d
- 
-  var gsig : double
-  var bsig : double
-  var gsig2 : double
-  var bsig2 : double
-  var swap : double
-
   for s in s3 do
+
+    var gsig : double
+    var bsig : double
+    var gsig2 : double
+    var bsig2 : double
     
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
-    sC = r_mesh[e3].dx
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var sC = r_mesh[e3].dx
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
-      eR8 = {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var eR8 = int8d {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
   
       -- If v < 0, gather right values 
       -- otherwise, use cell center values
-      swap = 1.0
+      var swap = 1.0
       if (vxmesh[{ v.x, vlo2x }].v < 0 and Dim2 == 0) then
         if s.x == r_sigb.bounds.hi.x then
           gsig = prx_sig[eR7].g
@@ -3438,48 +3173,33 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var sC : double
- 
-  var bc : int32[6]
-  var IR : int32
-  var JR : int32
-  var KR : int32
-  
-  var e3 : int8d
-  var e7 : int8d
-  var e8 : int8d
-  var eR3 : int8d
-  var eR7 : int8d
-  var eR8 : int8d
- 
-  var gsig : double
-  var bsig : double
-  var gsig2 : double
-  var bsig2 : double
-  var swap : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
-    sC = r_mesh[e3].dy
+
+    var gsig : double
+    var bsig : double
+    var gsig2 : double
+    var bsig2 : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var sC = r_mesh[e3].dy
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
-      eR8 = {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var eR8 = int8d {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
   
       -- If v < 0, gather right values 
       -- otherwise, use cell center values
-      swap = 1.0
+      var swap = 1.0
       if (vymesh[{ v.y, vlo2y }].v < 0 and Dim2 == 1) then
         if s.y == r_sigb.bounds.hi.y then
           gsig = pry_sig[eR7].g
@@ -3543,48 +3263,33 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var sC : double
- 
-  var bc : int32[6]
-  var IR : int32
-  var JR : int32
-  var KR : int32
-  
-  var e3 : int8d
-  var e7 : int8d
-  var e8 : int8d
-  var eR3 : int8d
-  var eR7 : int8d
-  var eR8 : int8d
- 
-  var gsig : double
-  var bsig : double
-  var gsig2 : double
-  var bsig2 : double
-  var swap : double
-
   for s in s3 do
+
+    var gsig : double
+    var bsig : double
+    var gsig2 : double
+    var bsig2 : double
     
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
-    sC = r_mesh[e3].dy
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var sC = r_mesh[e3].dy
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
-      eR8 = {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var eR8 = int8d {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
   
       -- If v < 0, gather right values 
       -- otherwise, use cell center values
-      swap = 1.0
+      var swap = 1.0
       if (vymesh[{ v.y, vlo2y }].v < 0 and Dim2 == 1) then
         if s.y == r_sigb.bounds.hi.y then
           gsig = pry_sig[eR7].g
@@ -3648,48 +3353,33 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var sC : double
- 
-  var bc : int32[6]
-  var IR : int32
-  var JR : int32
-  var KR : int32
-  
-  var e3 : int8d
-  var e7 : int8d
-  var e8 : int8d
-  var eR3 : int8d
-  var eR7 : int8d
-  var eR8 : int8d
- 
-  var gsig : double
-  var bsig : double
-  var gsig2 : double
-  var bsig2 : double
-  var swap : double
-
   for s in s3 do
+
+    var gsig : double
+    var bsig : double
+    var gsig2 : double
+    var bsig2 : double
     
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
-    sC = r_mesh[e3].dy
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var sC = r_mesh[e3].dy
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
-      eR8 = {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var eR8 = int8d {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
   
       -- If v < 0, gather right values 
       -- otherwise, use cell center values
-      swap = 1.0
+      var swap = 1.0
       if (vymesh[{ v.y, vlo2y }].v < 0 and Dim2 == 1) then
         if s.y == r_sigb.bounds.hi.y then
           gsig = pry_sig[eR7].g
@@ -3753,48 +3443,33 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var sC : double
- 
-  var bc : int32[6]
-  var IR : int32
-  var JR : int32
-  var KR : int32
-  
-  var e3 : int8d
-  var e7 : int8d
-  var e8 : int8d
-  var eR3 : int8d
-  var eR7 : int8d
-  var eR8 : int8d
- 
-  var gsig : double
-  var bsig : double
-  var gsig2 : double
-  var bsig2 : double
-  var swap : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
-    sC = r_mesh[e3].dz
+
+    var gsig : double
+    var bsig : double
+    var gsig2 : double
+    var bsig2 : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var sC = r_mesh[e3].dz
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
-      eR8 = {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var eR8 = int8d {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
   
       -- If v < 0, gather right values 
       -- otherwise, use cell center values
-      swap = 1.0
+      var swap = 1.0
       if (vzmesh[{ v.z, vlo2z }].v < 0 and Dim2 == 2) then
         if s.z == r_sigb.bounds.hi.z then
           gsig = prz_sig[eR7].g
@@ -3858,48 +3533,33 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var sC : double
- 
-  var bc : int32[6]
-  var IR : int32
-  var JR : int32
-  var KR : int32
-  
-  var e3 : int8d
-  var e7 : int8d
-  var e8 : int8d
-  var eR3 : int8d
-  var eR7 : int8d
-  var eR8 : int8d
- 
-  var gsig : double
-  var bsig : double
-  var gsig2 : double
-  var bsig2 : double
-  var swap : double
-
   for s in s3 do
-    
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
-    sC = r_mesh[e3].dz
+
+    var gsig : double
+    var bsig : double
+    var gsig2 : double
+    var bsig2 : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var sC = r_mesh[e3].dz
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
-      eR8 = {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var eR8 = int8d {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
   
       -- If v < 0, gather right values 
       -- otherwise, use cell center values
-      swap = 1.0
+      var swap = 1.0
       if (vzmesh[{ v.z, vlo2z }].v < 0 and Dim2 == 2) then
         if s.z == r_sigb.bounds.hi.z then
           gsig = prz_sig[eR7].g
@@ -3963,48 +3623,33 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var sC : double
- 
-  var bc : int32[6]
-  var IR : int32
-  var JR : int32
-  var KR : int32
-  
-  var e3 : int8d
-  var e7 : int8d
-  var e8 : int8d
-  var eR3 : int8d
-  var eR7 : int8d
-  var eR8 : int8d
- 
-  var gsig : double
-  var bsig : double
-  var gsig2 : double
-  var bsig2 : double
-  var swap : double
-
   for s in s3 do
     
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
-    sC = r_mesh[e3].dz
+    var gsig : double
+    var bsig : double
+    var gsig2 : double
+    var bsig2 : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var sC = r_mesh[e3].dz
 
     -- Gather Left and Right Indices
-    bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
-    IR = bc[3]
-    JR = bc[4]
-    KR = bc[5]
-    eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+    var bc = BC(s.x, s.y, s.z, Dim2, BCs, N)
+    var IR = bc[3]
+    var JR = bc[4]
+    var KR = bc[5]
+    var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
     for v in v3 do
 
-      e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-      e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
-      eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
-      eR8 = {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
+      var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+      var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+      var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+      var eR8 = int8d {IR, JR, KR, Dim, Dim2, v.x, v.y, v.z}
 
       -- If v < 0, gather right values 
       -- otherwise, use cell center values
-      swap = 1.0
+      var swap = 1.0
       if (vzmesh[{ v.z, vlo2z }].v < 0 and Dim2 == 2) then
         if s.z == r_sigb.bounds.hi.z then
           gsig = prz_sig[eR7].g
@@ -4073,47 +3718,35 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var sC : double[3]
-  
-  var bc : int32[6]
-  var IR : int32
-  var JR : int32
-  var KR : int32
-
-  var e3 : int8d
-  var e6 : int8d
-  var e7 : int8d
-  var eR3 : int8d
-  var eR6 : int8d
-  var eR7 : int8d
-
-  var swap : double
-  var gb : double
-  var bb : double
-  var gsig : double
-  var bsig : double
-
   for s in s3 do
 
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var sC : double[3]
+
+    var swap : double
+    var gb : double
+    var bb : double
+    var gsig : double
+    var bsig : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
 
     for Dim = 0, effD do
 
       -- Gather Right Indices
-      bc = BC(s.x, s.y, s.z, Dim, BCs, N)
-      IR = bc[3]
-      JR = bc[4]
-      KR = bc[5]
-      eR3 = {IR, JR, KR, 0, 0, 0, 0, 0}
+      var bc = BC(s.x, s.y, s.z, Dim, BCs, N)
+      var IR = bc[3]
+      var JR = bc[4]
+      var KR = bc[5]
+      var eR3 = int8d {IR, JR, KR, 0, 0, 0, 0, 0}
 
       for v in v3 do      
 
-        e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
-        e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+        var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
+        var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
 
         -- Gather Right Indices 
-        eR6 = {IR, JR, KR, 0, 0, v.x, v.y, v.z}
-        eR7 = {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
+        var eR6 = int8d {IR, JR, KR, 0, 0, v.x, v.y, v.z}
+        var eR7 = int8d {IR, JR, KR, Dim, 0, v.x, v.y, v.z}
 
         -- Dot Product is just a single product when using rectangular mesh
         swap = 1.0
@@ -4213,9 +3846,6 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var e7 : int8d
-  var e8 : int8d
-
   for v in v3 do
     Xi[0] = vxmesh[{ v.x, vlo2x }].v
     Xi[1] = vymesh[{ v.y, vlo2y }].v
@@ -4226,8 +3856,8 @@ do
         for Dim2 = 0, effD do
 
           -- Gather Indices
-          e7 = {s.x, s.y, s.z, Dim2, 0, v.x, v.y, v.z}
-          e8 = {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
+          var e7 = int8d {s.x, s.y, s.z, Dim2, 0, v.x, v.y, v.z}
+          var e8 = int8d {s.x, s.y, s.z, Dim, Dim2, v.x, v.y, v.z}
 
           -- Interpolate gridbarplus from boundary to velocity dependent location
           r_gridbarpb[e7].g = r_gridbarpb[e7].g - dt/2.0*Xi[Dim]*r_sigb[e8].g
@@ -4265,20 +3895,17 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  var e4 : int8d
-  var e7 : int8d
-
   -- First compute density at boundary; density is needed for others.
   -- Initialize with zero, then iterate over contributions in velocity space
   for s in s3 do
     for Dim = 0, effD do
-      e4 = {s.x, s.y, s.z, Dim, 0, 0, 0, 0}
+      var e4 = int8d {s.x, s.y, s.z, Dim, 0, 0, 0, 0}
       r_Wb[e4].rho = 0
 
       -- Add up all phase space contributions to density
       -- Fourth Order Newton Cotes
       for v in v3 do
-        e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+        var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
         r_Wb[e4].rho = r_Wb[e4].rho + vxmesh[{ v.x, vlo2x }].w*vymesh[{ v.y, vlo2y }].w*vzmesh[{ v.z, vlo2z }].w*r_gridbarpb[e7].g
       end
     end
@@ -4286,11 +3913,11 @@ do
       
   -- Then compute momentum and energy
   -- Initialize, then iterate over contributions in velocity space
-  var U : double[3]
   for s in s3 do
+    var U : double[3]
     for Dim = 0, effD do
 
-      e4 = {s.x, s.y, s.z, Dim, 0, 0, 0, 0} 
+      var e4 = int8d {s.x, s.y, s.z, Dim, 0, 0, 0, 0} 
 
       -- Initialization is not zero when external acceleration != 0, since this is not phi but rather phibar 
       for d = 0, effD do
@@ -4305,7 +3932,7 @@ do
         U[2] = vzmesh[{ v.z, vlo2z }].v
  
 
-        e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}    
+        var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}    
 
         -- Add up all phase space contributions to momentum and energy
         -- Fourth Order Newton Cotes
@@ -4356,30 +3983,25 @@ do
   var vlo2x = vxmesh.bounds.lo.y
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
-  
-  var tg : double      -- tau_g
-  var tb : double      -- tau_b
-  var u : double       -- Bulk Velocity
-  var T : double       -- Temperature
-  var Xi : double[3]   -- Velocity Vector
-  var c2 : double      -- Peculiar Velocity squared
-
-  -- Equilibrium Distributions
-  var g_eq : double
-  var b_eq : double
-
-  -- Indices
-  var e3 : int8d
-  var e4 : int8d
-  var e7 : int8d
 
   for s in s3 do
+  
+    var tg : double      -- tau_g
+    var tb : double      -- tau_b
+    var u : double       -- Bulk Velocity
+    var T : double       -- Temperature
+    var Xi : double[3]   -- Velocity Vector
+    var c2 : double      -- Peculiar Velocity squared
 
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    -- Equilibrium Distributions
+    var g_eq : double
+    var b_eq : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
 
     for Dim = 0, effD do
 
-      e4 = {s.x, s.y, s.z, Dim, 0, 0, 0, 0}
+      var e4 = int8d {s.x, s.y, s.z, Dim, 0, 0, 0, 0}
 
       -- Compute Bulk Velocity
       u = 0 
@@ -4402,14 +4024,14 @@ do
 
       for v in v3 do
 
-        e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+        var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
 
         Xi[0] = vxmesh[{ v.x, vlo2x }].v
         Xi[1] = vymesh[{ v.y, vlo2y }].v
         Xi[2] = vzmesh[{ v.z, vlo2z }].v
 
         -- Compute Peculiar Velocity squared
-        c2 = 0
+        var c2 = 0
         for d = 0, effD do
           c2 =  c2 + (Xi[d] - r_Wb[e4].rhov[d]/r_Wb[e4].rho)*(Xi[d] - r_Wb[e4].rhov[d]/r_Wb[e4].rho)
         end
@@ -4469,9 +4091,6 @@ where
   reads(r_gridbarpb, vxmesh, vymesh, vzmesh, r_mesh, plx_gridbarpb, ply_gridbarpb, plz_gridbarpb),
   reads writes(r_F)
 do    
-  var A : double[3]   -- Area of particular cell face
-  var Xi : double[3]  -- Velocity Vector
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -4482,31 +4101,20 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var e3 : int8d
-  var e7 : int8d 
-  var e6 : int8d 
-  var eL7 : int8d
-
-  -- Left and Right Indices
-  var bc : int32[6]
-  var IL : int32
-  var JL : int32
-  var KL : int32
-  var IR : int32
-  var JK : int32
-  var KR : int32
-
-  -- (pseudo)Booleans for Boundary Conditions
-  var right : double = 1.0 
-  var left : double = 1.0
-
-  -- Declarations for distributions on left face
-  var gL : double
-  var bL : double
-
   for s in s3 do
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+
+    var A : double[3]   -- Area of particular cell face
+    var Xi : double[3]  -- Velocity Vector
+
+    -- (pseudo)Booleans for Boundary Conditions
+    var right : double = 1.0 
+    var left : double = 1.0
+
+    -- Declarations for distributions on left face
+    var gL : double
+    var bL : double
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
 
     -- Area for rectangular mesh
     A[0] = r_mesh[e3].dy*r_mesh[e3].dz
@@ -4517,18 +4125,18 @@ do
     for Dim = 0, effD do
 
       -- Gather Left and Right Indices
-      bc = BC(s.x, s.y, s.z, Dim, BCs, N)
-      IL = bc[0]
-      JL = bc[1]
-      KL = bc[2]
-      IR = bc[3]
-      JK = bc[4]
-      KR = bc[5]
+      var bc = BC(s.x, s.y, s.z, Dim, BCs, N)
+      var IL = bc[0]
+      var JL = bc[1]
+      var KL = bc[2]
+      var IR = bc[3]
+      var JK = bc[4]
+      var KR = bc[5]
 
       -- Periodic & Outflow Boundary Conditions
       -- and also default non-boundary case
-      right = 1.0 
-      left = 1.0
+      var right = 1.0 
+      var left = 1.0
 
       -- Dirichlet Boundary Conditions
       -- No flux means no update
@@ -4548,9 +4156,9 @@ do
       for v in v3 do 
 
         -- Gather Left Indices
-        e7 = {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
-        e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
-        eL7 = {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
+        var e7 = int8d {s.x, s.y, s.z, Dim, 0, v.x, v.y, v.z}
+        var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
+        var eL7 = int8d {IL, JL, KL, Dim, 0, v.x, v.y, v.z}
 
         -- Fill in Velocity Vector
         Xi[0] = vxmesh[{ v.x, vlo2x }].v
@@ -4625,25 +4233,6 @@ where
   reads(vxmesh, vymesh, vzmesh, r_mesh, r_F, r_S),
   reads writes(r_W, r_grid)
 do
-  var V : double      -- Volume of Cell
-  var Xi : double[3]  -- Discrete Velocity 
-  var uo : double     -- Old Flow Velocity
-  var To : double     -- Old Temperature
-  var tgo : double    -- Old tau_g
-  var tbo : double    -- Old tau_b
-  var u : double      -- New Flow Velocity
-  var T : double      -- New Temperature 
-  var tg : double     -- New tau_g
-  var tb : double     -- New tau_b
-  var c2 : double     -- Peculiar Velocity squared
-
-  -- Equilibrium Distributions
-  -- New & Old
-  var g_eq : double   
-  var b_eq : double
-  var g_eqo : double
-  var b_eqo : double
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -4654,16 +4243,33 @@ do
   var vlo2y = vymesh.bounds.lo.y
   var vlo2z = vzmesh.bounds.lo.y
 
-  -- Indices
-  var e3 : int8d 
-  var e6 : int8d 
-  var i : int32
-  var j : int32
-  var k : int32
-
   for s in s3 do
 
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var V : double      -- Volume of Cell
+    var Xi : double[3]  -- Discrete Velocity 
+    var uo : double     -- Old Flow Velocity
+    var To : double     -- Old Temperature
+    var tgo : double    -- Old tau_g
+    var tbo : double    -- Old tau_b
+    var u : double      -- New Flow Velocity
+    var T : double      -- New Temperature 
+    var tg : double     -- New tau_g
+    var tb : double     -- New tau_b
+    var c2 : double     -- Peculiar Velocity squared
+
+    -- Equilibrium Distributions
+    -- New & Old
+    var g_eq : double   
+    var b_eq : double
+    var g_eqo : double
+    var b_eqo : double
+
+    -- Indices
+    var i : int32
+    var j : int32
+    var k : int32
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
 
     -- Compute Volume
     V = r_mesh[e3].dx*r_mesh[e3].dy*r_mesh[e3].dz
@@ -4686,7 +4292,7 @@ do
   
     for v in v3 do 
 
-      e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
+      var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
 
       -- Fill in Velocity Vector
       Xi[0] = vxmesh[{ v.x, vlo2x }].v
@@ -4736,7 +4342,31 @@ do
   -- Step 4: Update W at cell center
   for s in s3 do
 
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var V : double      -- Volume of Cell
+    var Xi : double[3]  -- Discrete Velocity 
+    var uo : double     -- Old Flow Velocity
+    var To : double     -- Old Temperature
+    var tgo : double    -- Old tau_g
+    var tbo : double    -- Old tau_b
+    var u : double      -- New Flow Velocity
+    var T : double      -- New Temperature 
+    var tg : double     -- New tau_g
+    var tb : double     -- New tau_b
+    var c2 : double     -- Peculiar Velocity squared
+
+    -- Equilibrium Distributions
+    -- New & Old
+    var g_eq : double   
+    var b_eq : double
+    var g_eqo : double
+    var b_eqo : double
+
+    -- Indices
+    var i : int32
+    var j : int32
+    var k : int32
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
 
     -- Momentum and Energy require Density
     -- Update Density first
@@ -4751,7 +4381,7 @@ do
     
       for v in v3 do 
 
-        e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
+        var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
 
         -- Fill in Velocity Vector
         Xi[0] = vxmesh[{ v.x, vlo2x }].v
@@ -4774,7 +4404,31 @@ do
 
   for s in s3 do
 
-    e3 = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var V : double      -- Volume of Cell
+    var Xi : double[3]  -- Discrete Velocity 
+    var uo : double     -- Old Flow Velocity
+    var To : double     -- Old Temperature
+    var tgo : double    -- Old tau_g
+    var tbo : double    -- Old tau_b
+    var u : double      -- New Flow Velocity
+    var T : double      -- New Temperature 
+    var tg : double     -- New tau_g
+    var tb : double     -- New tau_b
+    var c2 : double     -- Peculiar Velocity squared
+
+    -- Equilibrium Distributions
+    -- New & Old
+    var g_eq : double   
+    var b_eq : double
+    var g_eqo : double
+    var b_eqo : double
+
+    -- Indices
+    var i : int32
+    var j : int32
+    var k : int32
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
 
     -- Compute New Bulk Velocity
     u = 0 
@@ -4805,7 +4459,7 @@ do
       Xi[2] = vzmesh[{ v.z, vlo2z }].v
 
       -- Compute New Equilibrium Distributions
-      c2 = 0 
+      var c2 = 0 
       for d = 0, effD do
         c2 += (Xi[d]-r_W[e3].rhov[d]/r_W[e3].rho)*(Xi[d]-r_W[e3].rhov[d]/r_W[e3].rho)
       end
@@ -4823,7 +4477,7 @@ do
       i = s.x
       j = s.y
       k = s.z
-      e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
+      var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
 
       if ((BCs[0] == 1 and i == 0) or (BCs[3] == 1 and i == N[0] - 1) or
           (BCs[1] == 1 and j == 0 and effD > 1) or (BCs[4] == 1 and j == N[1] - 1 and effD > 1) or
@@ -4855,13 +4509,37 @@ do
   -- Cells on the outer edge of the grid becomes ghost zones.
   for s in s3 do
 
-    var e3 : int8d = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var V : double      -- Volume of Cell
+    var Xi : double[3]  -- Discrete Velocity 
+    var uo : double     -- Old Flow Velocity
+    var To : double     -- Old Temperature
+    var tgo : double    -- Old tau_g
+    var tbo : double    -- Old tau_b
+    var u : double      -- New Flow Velocity
+    var T : double      -- New Temperature 
+    var tg : double     -- New tau_g
+    var tb : double     -- New tau_b
+    var c2 : double     -- Peculiar Velocity squared
+
+    -- Equilibrium Distributions
+    -- New & Old
+    var g_eq : double   
+    var b_eq : double
+    var g_eqo : double
+    var b_eqo : double
+
+    -- Indices
+    var i : int32
+    var j : int32
+    var k : int32
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
 
     -- Left x Edge
     if (BCs[0] == 2 and s.x == 0) then
 
-      var e3R : int8d = {1, s.y, s.z, 0, 0, 0, 0, 0}
-      var e3R2 : int8d = {2, s.y, s.z, 0, 0, 0, 0, 0}
+      var e3R = int8d {1, s.y, s.z, 0, 0, 0, 0, 0}
+      var e3R2 = int8d {2, s.y, s.z, 0, 0, 0, 0, 0}
 
       -- Three versions: copy, average, interpolate
       r_W[e3].rho = r_W[e3R].rho -- copy
@@ -4879,9 +4557,9 @@ do
 
       for v in v3 do
 
-        e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
-        var eR6 : int8d = {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
-        var eR62 : int8d = {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
+        var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
+        var eR6 = int8d {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
+        var eR62 = int8d {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
 
         r_grid[e6].g = r_grid[eR6].g -- copy
         r_grid[e6].b = r_grid[eR6].b -- copy
@@ -4896,8 +4574,8 @@ do
     -- Right x Edge
     if (BCs[3] == 2 and s.x == N[0] - 1) then
 
-      var e3R : int8d = {s.x - 1, s.y, s.z, 0, 0, 0, 0, 0}
-      var e3R2 : int8d = {s.x - 2, s.y, s.z, 0, 0, 0, 0, 0}
+      var e3R = int8d {s.x - 1, s.y, s.z, 0, 0, 0, 0, 0}
+      var e3R2 = int8d {s.x - 2, s.y, s.z, 0, 0, 0, 0, 0}
 
       r_W[e3].rho = r_W[e3R].rho -- copy
       --r_W[e3].rho = (r_W[e3].rho + r_W[e3R].rho)/2 -- avg
@@ -4913,9 +4591,9 @@ do
 
       for v in v3 do
 
-        e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
-        var eR6 : int8d = {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
-        var eR62 : int8d = {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
+        var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
+        var eR6 = int8d {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
+        var eR62 = int8d {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
 
         r_grid[e6].g = r_grid[eR6].g -- copy
         r_grid[e6].b = r_grid[eR6].b -- copy
@@ -4930,8 +4608,8 @@ do
     -- Left y Edge
     if (BCs[1] == 2 and s.y == 0) then
 
-      var e3R : int8d = {s.x, 1, s.z, 0, 0, 0, 0, 0}
-      var e3R2 : int8d = {s.x, 2, s.z, 0, 0, 0, 0, 0}
+      var e3R = int8d {s.x, 1, s.z, 0, 0, 0, 0, 0}
+      var e3R2 = int8d {s.x, 2, s.z, 0, 0, 0, 0, 0}
 
       r_W[e3].rho = r_W[e3R].rho -- copy
       --r_W[e3].rho = (r_W[e3].rho + r_W[e3R].rho)/2 -- avg
@@ -4947,9 +4625,9 @@ do
 
       for v in v3 do
 
-        e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
-        var eR6 : int8d = {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
-        var eR62 : int8d = {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
+        var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
+        var eR6 = int8d {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
+        var eR62 = int8d {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
 
         r_grid[e6].g = r_grid[eR6].g -- copy
         r_grid[e6].b = r_grid[eR6].b -- copy
@@ -4964,8 +4642,8 @@ do
     -- Right y Edge
     if (BCs[4] == 2 and s.y == N[1] - 1) then
 
-      var e3R : int8d = {s.x, s.y - 1, s.z, 0, 0, 0, 0, 0}
-      var e3R2 : int8d = {s.x, s.y - 2, s.z, 0, 0, 0, 0, 0}
+      var e3R = int8d {s.x, s.y - 1, s.z, 0, 0, 0, 0, 0}
+      var e3R2 = int8d {s.x, s.y - 2, s.z, 0, 0, 0, 0, 0}
 
       r_W[e3].rho = r_W[e3R].rho -- copy
       --r_W[e3].rho = (r_W[e3].rho + r_W[e3R].rho)/2 -- avg
@@ -4981,9 +4659,9 @@ do
 
       for v in v3 do
 
-        e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
-        var eR6 : int8d = {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
-        var eR62 : int8d = {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
+        var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
+        var eR6 = int8d {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
+        var eR62 = int8d {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
 
         r_grid[e6].g = r_grid[eR6].g -- copy
         r_grid[e6].b = r_grid[eR6].b -- copy
@@ -4998,8 +4676,8 @@ do
     -- Left z Edge
     if (BCs[2] == 2 and s.z == 0) then
 
-      var e3R : int8d = {s.x, s.y, 1, 0, 0, 0, 0, 0}
-      var e3R2 : int8d = {s.x, s.y, 2, 0, 0, 0, 0, 0}
+      var e3R = int8d {s.x, s.y, 1, 0, 0, 0, 0, 0}
+      var e3R2 = int8d {s.x, s.y, 2, 0, 0, 0, 0, 0}
 
       r_W[e3].rho = r_W[e3R].rho -- copy
       --r_W[e3].rho = (r_W[e3].rho + r_W[e3R].rho)/2 -- avg
@@ -5015,9 +4693,9 @@ do
 
       for v in v3 do
 
-        e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
-        var eR6 : int8d = {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
-        var eR62 : int8d = {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
+        var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
+        var eR6 = int8d {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
+        var eR62 = int8d {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
 
         r_grid[e6].g = r_grid[eR6].g -- copy
         r_grid[e6].b = r_grid[eR6].b -- copy
@@ -5032,8 +4710,8 @@ do
     -- Right z Edge
     if (BCs[5] == 2 and s.z == N[2] - 1) then
 
-      var e3R : int8d = {s.x, s.y, s.z - 1, 0, 0, 0, 0, 0}
-      var e3R2 : int8d = {s.x, s.y, s.z - 2, 0, 0, 0, 0, 0}
+      var e3R = int8d {s.x, s.y, s.z - 1, 0, 0, 0, 0, 0}
+      var e3R2 = int8d {s.x, s.y, s.z - 2, 0, 0, 0, 0, 0}
 
       r_W[e3].rho = r_W[e3R].rho -- copy
       --r_W[e3].rho = (r_W[e3].rho + r_W[e3R].rho)/2 -- avg
@@ -5049,9 +4727,9 @@ do
 
       for v in v3 do
 
-        e6 = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
-        var eR6 : int8d = {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
-        var eR62 : int8d = {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
+        var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z} 
+        var eR6 = int8d {e3R.x, e3R.y, e3R.z, 0, 0, v.x, v.y, v.z}
+        var eR62 = int8d {e3R2.x, e3R2.y, e3R2.z, 0, 0, v.x, v.y, v.z}
 
         r_grid[e6].g = r_grid[eR6].g -- copy
         r_grid[e6].b = r_grid[eR6].b -- copy
@@ -5081,10 +4759,6 @@ where
   reads(r_mesh, r_W, vxmesh, vymesh, vzmesh)
 do
 
-  var T : double -- Temperature 
-  var u : double -- Bulk Velocity
-  var Xi : double[3] -- Velocity Vector
-
   -- Generate Index Spaces for Iteration
   var vlo : int3d = {vxmesh.bounds.lo.x, vymesh.bounds.lo.x, vzmesh.bounds.lo.x}
   var vhi : int3d = {vxmesh.bounds.hi.x, vymesh.bounds.hi.x, vzmesh.bounds.hi.x}
@@ -5097,7 +4771,11 @@ do
 
   for s in s3 do
 
-    var e3 : int8d = {s.x, s.y, s.z, 0, 0, 0, 0, 0}
+    var T : double -- Temperature 
+    var u : double -- Bulk Velocity
+    var Xi : double[3] -- Velocity Vector
+
+    var e3 = int8d {s.x, s.y, s.z, 0, 0, 0, 0, 0}
 
     -- Compute Bulk Velocity
     u = 0
@@ -5111,7 +4789,7 @@ do
     
     for v in v3 do
     
-      var e6 : int8d = {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
+      var e6 = int8d {s.x, s.y, s.z, 0, 0, v.x, v.y, v.z}
 
       -- Fill in Velocity Vector
       Xi[0] = vxmesh[{ v.x, vlo2x }].v
@@ -5459,7 +5137,7 @@ task toplevel()
   if N[2] >= 8 then fdims[2] = 1 else fdims[2] = 0 end
 
   var f6 : int6d = factorize(config.cpus, fdims)
-  var f8 : int8d = {f6.x, f6.y, f6.z, 1, 1, f6.w, f6.v, f6.u}
+  var f8 = int8d {f6.x, f6.y, f6.z, 1, 1, f6.w, f6.v, f6.u}
   PrintPartition(f6.x, f6.y, f6.z, f6.w, f6.v, f6.u)
   var p8 = ispace(int8d, f8)
 
